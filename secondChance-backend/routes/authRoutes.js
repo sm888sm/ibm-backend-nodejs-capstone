@@ -130,8 +130,8 @@ router.put('/update', async (req, res) => {
         }
 
         // Update fields (add the fields you want to make updatable here)
-        if (req.body.firstName) existingUser.firstName = req.body.firstName; 
-        if (req.body.lastName) existingUser.lastName = req.body.lastName; 
+        if (req.body.name) existingUser.firstName = req.body.name; 
+        // if (req.body.lastName) existingUser.lastName = req.body.lastName; 
 
         existingUser.updatedAt = new Date();
 
