@@ -71,14 +71,14 @@ router.post('/', upload.single('file'), async (req, res, next) => {
         // Step 3: Task 7 - Image Upload (assuming image is sent in 'file' field)
         if (req.file) {
             // Update the 'image' field with the uploaded filename
-            secondChanceItem.image = req.file.filename;
+            secondChanceItem.image = `/images/${req.file.filename}`;
             await collection.updateOne(
                 { _id: secondChanceItem.insertedId }, // Find the new item
-                { $set: { image: req.file.filename } } // Update image field
+                { $set: { image: `/images/${req.file.filename}` } } // Update image field
             );
         }
 
-        res.status(201).json(secondChanceItem.ops[0]);
+        res.status(201).json(secondChanceItem);
     } catch (e) {
         next(e);
     }
