@@ -4,6 +4,7 @@ const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const logger = require('../logger');
 const connectToDatabase = require('../models/db');
+const { body, validationResult } = require('express-validator');
 
 const JWT_SECRET=process.env.JWT_SECRET;
 
@@ -97,6 +98,62 @@ router.post('/login', async (req, res) => {
 
     } catch (e) {
         logger.error('Error logging in user:', e);
+        return res.status(500).send('Internal server error');
+    }
+});
+
+router.put('/update', async (req, res) => {
+    try {
+        // Task 2: Input Validation 
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            logger.error('Validation errors in update request', errors.array());
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        // Task 3: Check for Email in Header
+        const email = req.headers.email;
+        if (!email) {
+            logger.error('Email not found in the request headers');
+            return res.status(400).json({ error: "Email not found in the request headers" });
+        }
+
+        // Task 4: Connect to MongoDB 
+        const db = await connectToDatabase(); 
+        const collection = db.collection("users");
+
+        // Task 5: Find the User
+        const existingUser = await collection.findOne({ email });
+        if (!existingUser) {
+            logger.error('User not found:', email);
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Update fields (add the fields you want to make updatable here)
+        if (req.body.firstName) existingUser.firstName = req.body.firstName; 
+        if (req.body.lastName) existingUser.lastName = req.body.lastName; 
+
+        existingUser.updatedAt = new Date();
+
+        // Task 6: Update the User in DB
+        const updatedUser = await collection.findOneAndUpdate(
+            { email },
+            { $set: existingUser },
+            { returnDocument: 'after' } // Return the updated document
+        );
+
+        // Task 7: Create JWT (if needed)
+        const payload = { 
+            user: {
+                id: updatedUser._id.toString(),
+            },
+        };
+        const authtoken = jwt.sign(payload, JWT_SECRET);
+
+        res.json({ authtoken });
+
+    } catch (e) {
+        logger.error('Error updating user:', e);
         return res.status(500).send('Internal server error');
     }
 });
